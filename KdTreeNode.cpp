@@ -106,6 +106,7 @@ void CKdTreeNode::Build(void)
 std::tuple<int, FloatType, bool> CKdTreeNode::NNSearch(const FloatType* p)
  {
 	if (!_has_sub_node) {
+		// Find minimum distance from points inside this node
 		FloatType min_distance = std::numeric_limits<FloatType>::max();
 		int min_distance_id = 0;
 		for (const int i : _point_ids) {
@@ -136,6 +137,9 @@ std::tuple<int, FloatType, bool> CKdTreeNode::NNSearch(const FloatType* p)
 	}
 
 	if(!fully_internal) {
+		/* NNSearch from sub nodes return a close point, but may not be the closest
+		 * So, search inside other nodes that may contain a closer point
+		 * */
 		if(HasInternalSphere(p, min_distance)) {
 			NNSearchRadius(p, min_distance_id, min_distance);
 			fully_internal = true;
