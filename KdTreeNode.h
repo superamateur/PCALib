@@ -51,7 +51,6 @@ private:
 };
 
 typedef std::shared_ptr<CKdTreeNode> CKdTreeNodePtr;
-typedef std::weak_ptr<CKdTreeNode> CKdTreeNodeWkPtr;
 
 } /* namespace NPCA */
 
