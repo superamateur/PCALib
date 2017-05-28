@@ -54,7 +54,7 @@ void CKdTreeNode::Build(void)
 			num_1 += _arr.at(j);
 			num_2 += _arr.at(j) * _arr.at(j);
 		}
-		variations[i] = num_2 - _arr.size() * num_1 * num_1;
+		variations[i] = _arr.size() * num_2 - num_1 * num_1;
 	}
 
 	// split: the dimension with maximum variation
