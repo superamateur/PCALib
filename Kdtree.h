@@ -21,7 +21,7 @@ public:
 	virtual ~CKdtree();
 	int InsertNextPoints(const FloatType* p, int num);
 	void BuildTree();
-	int NNSearch(const FloatType* p);
+	std::vector<int> kNNSearch(const FloatType* p, int num);
 	void Debug() const;
 
 private:

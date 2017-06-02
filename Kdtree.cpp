@@ -68,10 +68,14 @@ void CKdtree::BuildTree() {
 	_root->Build();
 }
 
-int CKdtree::NNSearch(const FloatType* p)
+std::vector<int> CKdtree::kNNSearch(const FloatType* p, int num)
 {
-	auto search_result = _root->NNSearch(p);
-	return std::get<0>(search_result);
+	const auto search_result = _root->NNSearch(p, num);
+	auto qidx = std::get<0>(search_result);
+	std::sort(qidx.begin(), qidx.end());
+	std::vector<int> ret(qidx.size());
+	std::transform(qidx.begin(), qidx.end(), ret.begin(), [](const SQueryIndex& u) { return u._id; });
+	return ret;
 }
 
 void CKdtree::Debug() const {
