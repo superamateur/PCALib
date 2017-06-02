@@ -21,6 +21,14 @@ struct SBbox {
 	FloatArrayType _lower;
 	FloatArrayType _upper;
 };
+
+struct SQueryIndex {
+	FloatType _distance;
+	int _id;
+	bool operator < (const SQueryIndex& other) const { return _distance < other._distance; }
+};
+typedef std::vector<SQueryIndex> SQueryIndexArray;
+
 class CKdTreeNode {
 public:
 	CKdTreeNode();
@@ -28,15 +36,22 @@ public:
 			const std::vector<int>& i, const SBbox& b);
 	virtual ~CKdTreeNode();
 	void Build(void);
-	std::tuple<int, FloatType, bool> NNSearch(const FloatType* p);
-	void NNSearchRadius(const FloatType* p, int& closest_id, FloatType& min_radius);
+	std::tuple<SQueryIndexArray, bool, int> NNSearch(const FloatType* p, const int num);
 	FloatArrayType GetPointById(const int id);
-	bool HasIntersectWithSphere(const FloatType*  p,
-			const FloatType R);
-	bool HasInternalSphere(const FloatType* p,
-				const FloatType R);
+	int ID(void) const { return _uuid; }
+	int Rank(void) const { return _rank; }
+	SBbox& BBox(void) { return _bbox; }
+	void PrintBBox(void) const;
 
 private:
+	void RangeNNSearch(const FloatType* p, SQueryIndexArray& closest_points,
+			const int closest_node_id);
+	bool HasIntersectWithSphere(const FloatType* p, const FloatType R);
+	bool HasInternalSphere(const FloatType* p, const FloatType R);
+
+private:
+	int _uuid;
+	int _rank;
 	int _k;
 	int _node_size;
 	int _split;

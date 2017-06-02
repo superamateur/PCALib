@@ -16,12 +16,15 @@
 namespace NPCA {
 
 CKdTreeNode::CKdTreeNode()
-: _k(0)
+: _rank(0)
+,_k(0)
 , _node_size(0)
 , _split(0)
 , _split_val(FloatType(0))
 , _has_sub_node(false)
 {
+	static int s_uuid = 0;
+	_uuid = s_uuid++;
 }
 
 CKdTreeNode::CKdTreeNode(int k, int n, FloatMultiArrayTypePtr p,
@@ -49,12 +52,19 @@ void CKdTreeNode::Build(void)
 	std::vector<FloatType> variations(_k);
 	for (int i = 0; i < _k; ++i) {
 		const auto& _arr = _points->at(i);
+
 		double num_1 = 0., num_2 = 0.;
+		double max = std::numeric_limits<double>::lowest();
+		double min = std::numeric_limits<double>::max();
 		for (const int j : _point_ids) {
 			num_1 += _arr.at(j);
 			num_2 += _arr.at(j) * _arr.at(j);
+
+			max = std::max<double> (max, _arr.at(j));
+			min = std::min<double> (min, _arr.at(j));
 		}
-		variations[i] = _arr.size() * num_2 - num_1 * num_1;
+
+		variations[i] = _point_ids.size() * num_2 - num_1 * num_1;
 	}
 
 	// split: the dimension with maximum variation
@@ -83,14 +93,12 @@ void CKdTreeNode::Build(void)
 		return;
 	}
 
-	_has_sub_node = true;
 	{
 		auto left_bbox = _bbox;
 		left_bbox._upper.at(_split) = _split_val;
 		_left_node = std::make_shared<CKdTreeNode>(
 				CKdTreeNode(_k, _node_size, _points, left_point_ids, left_bbox));
 		_left_node->Build();
-
 	}
 
 	{
@@ -101,75 +109,78 @@ void CKdTreeNode::Build(void)
 		_right_node->Build();
 	}
 
+	_has_sub_node = true;
+	_rank = std::max<int>(_left_node->Rank(), _right_node->Rank()) + 1;
 }
 
-std::tuple<int, FloatType, bool> CKdTreeNode::NNSearch(const FloatType* p)
+std::tuple<SQueryIndexArray, bool, int> CKdTreeNode::NNSearch(const FloatType* p, const int num)
  {
-	if (!_has_sub_node) {
-		// Find minimum distance from points inside this node
-		FloatType min_distance = std::numeric_limits<FloatType>::max();
-		int min_distance_id = 0;
-		for (const int i : _point_ids) {
-			const auto q = GetPointById(i);
-			double sum = 0.;
+	if (num * 2 > (int)_point_ids.size() || !_has_sub_node) {
+		const int effective_num = std::min<int>(num, (int)_point_ids.size());
+		SQueryIndexArray min_distance_ids(_point_ids.size());
+		for (int i = 0; i < (int)_point_ids.size(); ++i) {
+			const auto q = GetPointById(_point_ids[i]);
+			FloatType sum = 0.;
 			for (int j = 0; j < _k; ++j) {
 				sum += (q[j] - p[j]) * (q[j] - p[j]);
 			}
-			if (sum < min_distance) {
-				min_distance = sum;
-				min_distance_id = i;
-			}
+			min_distance_ids[i] = SQueryIndex{sum, _point_ids[i]};
 		}
-		min_distance = std::sqrt(min_distance);
-
-		return std::make_tuple(min_distance_id, min_distance,
-				HasInternalSphere(p, min_distance));
+		std::nth_element(min_distance_ids.begin(), min_distance_ids.begin() + effective_num,
+				min_distance_ids.end());
+		min_distance_ids.resize(effective_num);
+		const auto max_R = std::sqrt(std::max_element(min_distance_ids.begin(), min_distance_ids.end())->_distance);
+		return std::make_tuple(min_distance_ids, HasInternalSphere(p, max_R), _uuid);
 	}
 
-	int min_distance_id;
-	FloatType min_distance;
+	SQueryIndexArray min_distance_ids;
 	bool fully_internal;
-
+	int closest_node_id;
 	if (p[_split] < _split_val) {
-		std::tie(min_distance_id, min_distance, fully_internal) = _left_node->NNSearch(p);
+		std::tie(min_distance_ids, fully_internal, closest_node_id) = _left_node->NNSearch(p, num);
 	} else {
-		std::tie(min_distance_id, min_distance, fully_internal) = _right_node->NNSearch(p);
+		std::tie(min_distance_ids, fully_internal, closest_node_id) = _right_node->NNSearch(p, num);
 	}
 
 	if(!fully_internal) {
-		/* NNSearch from sub nodes return a close point, but may not be the closest
-		 * So, search inside other nodes that may contain a closer point
-		 * */
-		if(HasInternalSphere(p, min_distance)) {
-			NNSearchRadius(p, min_distance_id, min_distance);
+		const auto max_R = std::sqrt(std::max_element(min_distance_ids.begin(), min_distance_ids.end())->_distance);
+		if (HasInternalSphere(p, max_R)) {
+			RangeNNSearch(p, min_distance_ids, closest_node_id);
 			fully_internal = true;
 		}
 	}
-	return std::make_tuple(min_distance_id, min_distance, fully_internal);
+
+	return std::make_tuple(min_distance_ids, fully_internal, closest_node_id);
 }
 
-void CKdTreeNode::NNSearchRadius(const FloatType* p, int& closest_id, FloatType& min_radius)
+void CKdTreeNode::RangeNNSearch(const FloatType* p, SQueryIndexArray& closest_points, const int closest_node_id)
 {
+	if(closest_node_id == _uuid) {
+		// all of the points in this node has been scanned previously
+		return;
+	}
+
 	if (!_has_sub_node) {
-		auto min_radius_2 = min_radius * min_radius;
-		for (const int i : _point_ids) {
-			const auto q = GetPointById(i);
-			double sum = 0.;
+		auto max_it = std::max_element(closest_points.begin(), closest_points.end());
+		for (int i = 0; i < (int) _point_ids.size(); ++i) {
+			const auto q = GetPointById(_point_ids[i]);
+			FloatType sum = 0.;
 			for (int j = 0; j < _k; ++j) {
 				sum += (q[j] - p[j]) * (q[j] - p[j]);
 			}
-			if (sum < min_radius_2) {
-				min_radius_2 = sum;
-				closest_id = i;
+			if(sum < max_it->_distance) {
+				max_it->_distance = sum;
+				max_it->_id = _point_ids[i];
+				max_it = std::max_element(closest_points.begin(), closest_points.end());
 			}
 		}
-		min_radius = std::sqrt(min_radius_2);
 	} else {
-		if (_left_node->HasIntersectWithSphere(p, min_radius)) {
-			_left_node->NNSearchRadius(p, closest_id, min_radius);
+		const auto max_R = std::sqrt(std::max_element(closest_points.begin(), closest_points.end())->_distance);
+		if (_left_node->HasIntersectWithSphere(p, max_R)) {
+			_left_node->RangeNNSearch(p, closest_points, closest_node_id);
 		}
-		if (_right_node->HasIntersectWithSphere(p, min_radius)) {
-			_right_node->NNSearchRadius(p, closest_id, min_radius);
+		if (_right_node->HasIntersectWithSphere(p, max_R)) {
+			_right_node->RangeNNSearch(p, closest_points, closest_node_id);
 		}
 	}
 }
@@ -180,6 +191,14 @@ FloatArrayType CKdTreeNode::GetPointById(const int id) {
 		ret[i] = _points->at(i).at(id);
 	}
 	return ret;
+}
+
+void CKdTreeNode::PrintBBox(void) const {
+	DLOG("Node " << _uuid << "---");
+	DLOG("Split axis : " << _split << ". Split val = " << _split_val);
+	DLOG_ARRAY(_bbox._lower, _k);
+	DLOG_ARRAY(_bbox._upper, _k);
+	DLOG("==END==" << std::endl);
 }
 
 bool CKdTreeNode::HasIntersectWithSphere(const FloatType* p,
