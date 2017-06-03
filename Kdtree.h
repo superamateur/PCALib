@@ -22,6 +22,7 @@ public:
 	int InsertNextPoints(const FloatType* p, int num);
 	void BuildTree();
 	std::vector<int> kNNSearch(const FloatType* p, int num);
+	std::vector<int> rNNSearch(const FloatType* p, const FloatType R);
 	void Debug() const;
 
 private:

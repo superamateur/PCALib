@@ -52,16 +52,10 @@ void CKdTreeNode::Build(void)
 	std::vector<FloatType> variations(_k);
 	for (int i = 0; i < _k; ++i) {
 		const auto& _arr = _points->at(i);
-
 		double num_1 = 0., num_2 = 0.;
-		double max = std::numeric_limits<double>::lowest();
-		double min = std::numeric_limits<double>::max();
 		for (const int j : _point_ids) {
 			num_1 += _arr.at(j);
 			num_2 += _arr.at(j) * _arr.at(j);
-
-			max = std::max<double> (max, _arr.at(j));
-			min = std::min<double> (min, _arr.at(j));
 		}
 
 		variations[i] = _point_ids.size() * num_2 - num_1 * num_1;
@@ -151,6 +145,33 @@ std::tuple<SQueryIndexArray, bool, int> CKdTreeNode::NNSearch(const FloatType* p
 	}
 
 	return std::make_tuple(min_distance_ids, fully_internal, closest_node_id);
+}
+
+std::vector<int> CKdTreeNode::rNNSearch(const FloatType* p, const FloatType R) {
+	std::vector<int> return_point_ids;
+	if (!_has_sub_node) {
+		const auto R2 = R * R;
+		for (int i = 0; i < (int) _point_ids.size(); ++i) {
+			const auto q = GetPointById(_point_ids[i]);
+			FloatType sum = 0.;
+			for (int j = 0; j < _k; ++j) {
+				sum += (q[j] - p[j]) * (q[j] - p[j]);
+			}
+			if(R2 >= sum) {
+				return_point_ids.push_back(_point_ids[i]);
+			}
+		}
+		return return_point_ids;
+	}
+
+	if (_left_node->HasIntersectWithSphere(p, R)) {
+		return_point_ids = _left_node->rNNSearch(p, R);
+	}
+	if (_right_node->HasIntersectWithSphere(p, R)) {
+		auto tmp = _right_node->rNNSearch(p, R);
+		return_point_ids.insert(return_point_ids.end(), tmp.begin(), tmp.end());
+	}
+	return return_point_ids;
 }
 
 void CKdTreeNode::RangeNNSearch(const FloatType* p, SQueryIndexArray& closest_points, const int closest_node_id)

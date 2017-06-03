@@ -11,17 +11,9 @@
 #include <vector>
 #include <tuple>
 
+#include "PCAlg.h"
+
 namespace NPCA {
-typedef float FloatType;
-typedef std::vector<FloatType> FloatArrayType;
-typedef std::vector<FloatArrayType> FloatMultiArrayType;
-typedef std::shared_ptr<FloatMultiArrayType> FloatMultiArrayTypePtr;
-
-struct SBbox {
-	FloatArrayType _lower;
-	FloatArrayType _upper;
-};
-
 struct SQueryIndex {
 	FloatType _distance;
 	int _id;
@@ -36,7 +28,10 @@ public:
 			const std::vector<int>& i, const SBbox& b);
 	virtual ~CKdTreeNode();
 	void Build(void);
+
 	std::tuple<SQueryIndexArray, bool, int> NNSearch(const FloatType* p, const int num);
+	std::vector<int> rNNSearch(const FloatType* p, const FloatType R);
+
 	FloatArrayType GetPointById(const int id);
 	int ID(void) const { return _uuid; }
 	int Rank(void) const { return _rank; }

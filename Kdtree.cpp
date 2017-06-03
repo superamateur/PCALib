@@ -40,7 +40,6 @@ CKdtree::CKdtree(int k, int a) :
 
 CKdtree::~CKdtree() {
 	// TODO Auto-generated destructor stub
-	DLOG("ENTERED: ");
 }
 
 int CKdtree::InsertNextPoints(const FloatType* p, int num) {
@@ -76,6 +75,10 @@ std::vector<int> CKdtree::kNNSearch(const FloatType* p, int num)
 	std::vector<int> ret(qidx.size());
 	std::transform(qidx.begin(), qidx.end(), ret.begin(), [](const SQueryIndex& u) { return u._id; });
 	return ret;
+}
+
+std::vector<int> CKdtree::rNNSearch(const FloatType* p, const FloatType R) {
+	return _root->rNNSearch(p, R);
 }
 
 void CKdtree::Debug() const {
