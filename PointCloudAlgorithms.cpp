@@ -14,11 +14,13 @@ using namespace std;
 namespace NPCA {
 bool test_Kd_tree_knn(void);
 bool test_Kd_tree_rnn(void);
+bool test_matrix_multiplication(void);
 }
 
 int main() {
 	DLOG("!!!Hello World!!!"); // prints !!!Hello World!!!
-	NPCA::test_Kd_tree_knn();
-	NPCA::test_Kd_tree_rnn();
+//	NPCA::test_Kd_tree_knn();
+//	NPCA::test_Kd_tree_rnn();
+	NPCA::test_matrix_multiplication();
 	return 0;
 }

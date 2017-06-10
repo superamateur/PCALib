@@ -14,7 +14,7 @@ namespace NPCALogger {
 #define DLOG(msg) { std::cout << __FILE__ << "::" << __FUNCTION__ << "::" << __LINE__ << "::" << msg << std::endl; }
 #define DLOG_ARRAY(arr, len) { \
 	std::cout << __FUNCTION__ << "::" << __LINE__ << "::"; \
-	for(int i = 0; i < len; ++i) std::cout << arr[i] << " "; \
+	for(int _IiSaIiEERKNS = 0; _IiSaIiEERKNS < (int)len; ++_IiSaIiEERKNS) std::cout << arr[_IiSaIiEERKNS] << " "; \
 	std::cout << std::endl; \
 	}
 
