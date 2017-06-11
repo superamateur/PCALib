@@ -41,7 +41,7 @@ Matrix::~Matrix() {
 
 Matrix Matrix::operator * (const Matrix& other) const {
 	if(_cols != other.Rows()) {
-		DLOG("Invalid Matrix size");
+		LOG_ERROR("Invalid Matrix size" << std::endl);
 		return Matrix();
 	}
 	Matrix ret(_rows, other.Cols());
@@ -114,7 +114,7 @@ Matrix& Matrix::Invert(void)
 		}
 
 		if (is_zero(_data[pivot_col][pivot_col])) {
-			DLOG("Rank = " << c);
+			LOG_ERROR("Rank = " << c);
 			throw std::logic_error("This Matrix CANNOT Be Inverted");
 		}
 
@@ -157,67 +157,12 @@ Matrix& Matrix::Invert(void)
 		}
 	}
 	return *this;
-
-#if 0
-	// Reference implementation
-	auto is_zero = [](FloatType a) { return a < std::numeric_limits<FloatType>::epsilon() && a > -std::numeric_limits<FloatType>::epsilon(); };
-	int i,icol, irow, j,k,l,ll;
-	FloatType big, dum, pivinv;
-	int N = _rows;
-	std::vector<int> indxc(N), indxr(N), ipiv(N,0);
-	for(i = 0; i < N; ++i) {
-		big = 0.;
-		for(j = 0; j < N; ++j) {
-			if(ipiv[j] != 1) {
-				for(k = 0; k < N; ++k) {
-					if(ipiv[k] == 0) {
-						if(std::fabs(_data[j][k]) >= big) {
-							big = std::fabs(_data[j][k]);
-							irow = j;
-							icol = k;
-						}
-					}
-				}
-			}
-		}
-		++(ipiv[icol]);
-		if(irow != icol) {
-			_data[irow].swap(_data[icol]);
-		}
-
-		indxr[i] = irow;
-		indxc[i] = icol;
-		if (is_zero (_data[icol][icol])) {
-			throw std::logic_error("Divided by zero");
-		}
-		pivinv = 1. / _data[icol][icol];
-		_data[icol][icol] = 1.0;
-		for(l = 0; l < N; ++l) _data[icol][l] *= pivinv;
-		for(ll = 0; ll < N; ++ll) {
-			if(ll != icol) {
-				dum = _data[ll][icol];
-				_data[ll][icol] = 0.0;
-				for(l = 0; l < N; ++l) _data[ll][l] -= _data[icol][l] * dum;
-			}
-		}
-		for(l = N - 1; l >= 0; --l) {
-			if(indxr[l] != indxc[l]) {
-				for(k = 0; k < N; ++k) {
-					std::swap(_data[k][indxr[l]], _data[k][indxc[l]]);
-				}
-			}
-		}
-		DLOG_ARRAY(ipiv, N);
-	}
-
-	return *this;
-#endif
 }
 
 Matrix Matrix::BinaryOperation(const Matrix& other, const BinaryOperator& bo) const
 {
 	if (_rows != other.Rows() || _cols != other.Cols()) {
-		DLOG("Invalid Matrix size");
+		LOG_ERROR("Invalid Matrix size" << std::endl);
 		return Matrix();
 	}
 	Matrix ret(_rows, _cols);
@@ -232,9 +177,9 @@ Matrix Matrix::BinaryOperation(const Matrix& other, const BinaryOperator& bo) co
 }
 
 void Matrix::Debug(void) const {
-	DLOG("Matrix " << _rows << "x" << _cols);
+	LOG_INFO("Matrix " << _rows << "x" << _cols << std::endl);
 	for (int i = 0; i < _rows; ++i) {
-		DLOG_ARRAY(_data[i], _data[i].size());
+		LOG_ARRAY(_data[i], _data[i].size());
 	}
 }
 

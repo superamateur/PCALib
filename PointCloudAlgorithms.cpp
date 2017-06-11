@@ -18,7 +18,7 @@ bool test_matrix_multiplication(void);
 }
 
 int main() {
-	DLOG("!!!Hello World!!!"); // prints !!!Hello World!!!
+	LOG_INFO("!!!Hello World!!!" << std::endl); // prints !!!Hello World!!!
 //	NPCA::test_Kd_tree_knn();
 //	NPCA::test_Kd_tree_rnn();
 	NPCA::test_matrix_multiplication();

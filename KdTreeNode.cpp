@@ -215,11 +215,11 @@ FloatArrayType CKdTreeNode::GetPointById(const int id) {
 }
 
 void CKdTreeNode::PrintBBox(void) const {
-	DLOG("Node " << _uuid << "---");
-	DLOG("Split axis : " << _split << ". Split val = " << _split_val);
-	DLOG_ARRAY(_bbox._lower, _k);
-	DLOG_ARRAY(_bbox._upper, _k);
-	DLOG("==END==" << std::endl);
+	LOG_INFO("Node " << _uuid << "---");
+	LOG_INFO("Split axis : " << _split << ". Split val = " << _split_val);
+	LOG_ARRAY(_bbox._lower, _k);
+	LOG_ARRAY(_bbox._upper, _k);
+	LOG_INFO("==END==");
 }
 
 bool CKdTreeNode::HasIntersectWithSphere(const FloatType* p,

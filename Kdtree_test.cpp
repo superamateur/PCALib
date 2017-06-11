@@ -12,7 +12,7 @@
 
 namespace NPCA {
 bool test_Kd_tree_knn(void) {
-	DLOG("Started");
+	LOG_INFO("Started" << std::endl);
 	StopWatch sw;
 	const int data_num = 1024 * 1024;
 	const int test_data_num = 100;
@@ -66,24 +66,24 @@ bool test_Kd_tree_knn(void) {
 			const auto my_knn_id = my_knn[i * test_data_k_num + j];
 			const auto naive_knn_id = naive_knn[i * test_data_k_num + j];
 			if (my_knn_id != naive_knn_id) {
-				DLOG(
-						"ERROR at " << i << "[ " << j <<"] . My Knn = " << my_knn_id << ". Naive Knn = " << naive_knn_id);
-				DLOG(
-						"Input: " << test_set[i * k] << ", " << test_set[i * k + 1]);
-				DLOG(
-						"my Knn: " << data_set[my_knn_id * k] << ", " << data_set[my_knn_id * k + 1] << ". hypot = " << std::hypot(data_set[my_knn_id * k] - test_set[i * k], data_set[my_knn_id * k + 1] - test_set[i * k + 1]));
-				DLOG(
-						"naive Knn: " << data_set[naive_knn_id * k] << ", " << data_set[naive_knn_id * k + 1] << ". hypot = " << std::hypot(data_set[naive_knn_id * k] - test_set[i * k], data_set[naive_knn_id * k + 1] - test_set[i * k + 1]));
+				LOG_ERROR(
+						"ERROR at " << i << "[ " << j <<"] . My Knn = " << my_knn_id << ". Naive Knn = " << naive_knn_id << std::endl);
+				LOG_ERROR(
+						"Input: " << test_set[i * k] << ", " << test_set[i * k + 1] << std::endl);
+				LOG_ERROR(
+						"my Knn: " << data_set[my_knn_id * k] << ", " << data_set[my_knn_id * k + 1] << ". hypot = " << std::hypot(data_set[my_knn_id * k] - test_set[i * k], data_set[my_knn_id * k + 1] - test_set[i * k + 1]) << std::endl);
+				LOG_ERROR(
+						"naive Knn: " << data_set[naive_knn_id * k] << ", " << data_set[naive_knn_id * k + 1] << ". hypot = " << std::hypot(data_set[naive_knn_id * k] - test_set[i * k], data_set[naive_knn_id * k + 1] - test_set[i * k + 1]) << std::endl);
 				return false;
 			}
 		}
 	}
-	DLOG("ALL MATCHED");
+	LOG_INFO("ALL MATCHED");
 	return true;
 }
 
 bool test_Kd_tree_rnn(void) {
-	DLOG("Started");
+	LOG_INFO("Started" << std::endl);
 	StopWatch sw;
 	const int data_num = 1024 * 1024;
 	const int test_data_num = 1000;
@@ -136,16 +136,16 @@ bool test_Kd_tree_rnn(void) {
 			const auto my_rnn_id = my_rnn[i][j];
 			const auto naive_rnn_id = naive_rnn[i][j];
 			if (my_rnn_id != naive_rnn_id) {
-				DLOG("ERROR at " << i << "[ " << j <<"] . My Rnn = " << my_rnn_id << ". Naive Rnn = " << naive_rnn_id);
+				LOG_INFO("ERROR at " << i << "[ " << j <<"] . My Rnn = " << my_rnn_id << ". Naive Rnn = " << naive_rnn_id << std::endl);
 				return false;
 			}
 		}
 		if (my_rnn[i].size() != naive_rnn[i].size()) {
-			DLOG("ERROR Size ]" << i << "] not match: My = " << my_rnn[i].size() << ", Naive = " << naive_rnn[i].size());
+			LOG_INFO("ERROR Size ]" << i << "] not match: My = " << my_rnn[i].size() << ", Naive = " << naive_rnn[i].size() << std::endl);
 			return false;
 		}
 	}
-	DLOG("ALL MATCHED");
+	LOG_INFO("ALL MATCHED" << std::endl);
 	return true;
 }
 }
